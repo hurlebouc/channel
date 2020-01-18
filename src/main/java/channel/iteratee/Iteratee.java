@@ -65,6 +65,10 @@ public interface Iteratee <I, O, R>{
         };
     }
 
+    public static <I, O> Iteratee<I, O, Object> yield(Class<I> iClass, Factory<O> o){
+        return yield(o);
+    }
+
     public static <I, O, R> Iteratee<I, O, R> end (Factory<R> r) {
         return new IteEnd<I, O, R>() {
             @Override
@@ -72,5 +76,27 @@ public interface Iteratee <I, O, R>{
                 return r.make();
             }
         };
+    }
+
+    public static <I, O, R> Iteratee<I, O, R> end (Class<I> iClass, Class<O> oClass, Factory<R> r) {
+        return end(r);
+    }
+
+    public static <I, O> Iteratee<I, O, I> get() {
+        return new IteConsume<I, O, I>() {
+            @Override
+            public Iteratee<I, O, I> consume(I i) {
+                return new IteEnd<I, O, I>() {
+                    @Override
+                    public I end() {
+                        return i;
+                    }
+                };
+            }
+        };
+    }
+
+    public static <I, O> Iteratee<I, O, I> get(Class<I> iClass, Class<O> oClass) {
+        return get();
     }
 }
