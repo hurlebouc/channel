@@ -4,6 +4,7 @@ import channel.iteratee.base.IteConsume;
 import channel.iteratee.base.IteEnd;
 import channel.iteratee.base.IteProduce;
 
+import java.util.Iterator;
 import java.util.function.Function;
 
 public interface Iteratee <I, O, R>{
@@ -123,5 +124,11 @@ public interface Iteratee <I, O, R>{
         Class<O> o = null;
         Class<Couple<String, Byte>> coupleType = null;
         return iterate(Byte.class,  o, coupleType, init, Iteratee::getAndCumulate, couple -> couple.b == 10).bind(couple -> end(() -> couple.a));
+    }
+
+    public static <I, O> Iteratee<I, O, Boolean> fromIterable(Iterable<O> iterable){
+        Iterator<O> iterator = iterable.iterator();
+        Class<I> iClass = null;
+        return yield(iClass, () -> iterator.next()).andThen(end(() -> iterator.hasNext())).repeatUntil(b -> b);
     }
 }
