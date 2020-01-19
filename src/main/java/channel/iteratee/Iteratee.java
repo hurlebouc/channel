@@ -99,4 +99,29 @@ public interface Iteratee <I, O, R>{
     public static <I, O> Iteratee<I, O, I> get(Class<I> iClass, Class<O> oClass) {
         return get();
     }
+
+    public static <I, O, R> Iteratee<I, O, R> iterate(Iteratee<I, O, R> iteInit, Function<R, Iteratee<I, O, R>> op, Function<R, Boolean> comp){
+        return iteInit.bind(r -> comp.apply(r) ? end(() -> r) : iterate(op.apply(r), op, comp));
+    }
+
+
+    public static <I, O, R> Iteratee<I, O, R> iterate(Class<I> iClass, Class<O> oClass, Class<R> rClass, Iteratee<I, O, R> iteInit, Function<R, Iteratee<I, O, R>> op, Function<R, Boolean> comp){
+        return iterate(iteInit, op, comp);
+    }
+
+    default public Iteratee<I, O, R> repeatBindUntil(Function<R, Iteratee<I, O, R>> op, Function<R, Boolean> comp){
+        return this.bind(r -> comp.apply(r) ? end(() -> r) : op.apply(r).repeatBindUntil(op, comp));
+    }
+
+    static <O> Iteratee<Byte, O, Couple<String, Byte>> getAndCumulate(Couple<String, Byte> couple){
+        Class<O> trc = null;
+        return get(Byte.class, trc).bind((a) -> end(() -> new Couple(couple.a + (char) a.byteValue(), a)));
+    }
+
+    public static <O> Iteratee<Byte, O, String> readLine() {
+        Iteratee<Byte, O, Couple<String, Byte>> init = end(() -> new Couple<>("", (byte) 0));
+        Class<O> o = null;
+        Class<Couple<String, Byte>> coupleType = null;
+        return iterate(Byte.class,  o, coupleType, init, Iteratee::getAndCumulate, couple -> couple.b == 10).bind(couple -> end(() -> couple.a));
+    }
 }
